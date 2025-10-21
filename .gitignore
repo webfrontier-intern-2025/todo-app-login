@@ -1,0 +1,10 @@
+# .gitignore
+
+# Virtual Environment
+.venv
+
+# Python cache
+__pycache__/
+
+# Database file
+*.db
