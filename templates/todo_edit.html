@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDo編集</title>
+    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <h1>ToDo編集 (ID: {{ todo.todo_id }})</h1>
+
+    <form action="{{ url_for('update_todo_from_form', todo_id=todo.todo_id) }}" method="post">
+        <div>
+            <label for="content">内容:</label>
+            <input type="text" id="content" name="content" value="{{ todo.content }}" required>
+        </div>
+        <div>
+            <label for="due_date">期限:</label>
+            <input type="text" id="due_date" name="due_date" value="{{ todo.due_date or '' }}" placeholder="YYYY-MM-DD">
+        </div>
+        <div>
+            <label for="is_completed">完了:</label>
+            <input type="checkbox" id="is_completed" name="is_completed" {% if todo.is_completed %}checked{% endif %}>
+        </div>
+        <button type="submit">更新</button>
+    </form>
+    <hr>
+    <a href="{{ url_for('read_todo_detail', todo_id=todo.todo_id) }}">詳細に戻る</a> |
+    <a href="/">一覧に戻る</a>
+</body>
+</html>

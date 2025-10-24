@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDo詳細</title>
+    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <h1>ToDo詳細</h1>
+    <div>
+        <strong>ID:</strong> {{ todo.todo_id }}
+    </div>
+    <div>
+        <strong>内容:</strong> {{ todo.content }}
+    </div>
+    <div>
+        <strong>期限:</strong> {{ todo.due_date }}
+    </div>
+    <div>
+        <strong>完了:</strong> {{ todo.is_completed }}
+    </div>
+    <div>
+        <strong>タグ:</strong>
+        <ul>
+            {% for tag in todo.tags %}
+                <li>{{ tag.description }}</li>
+            {% else %}
+                <li>タグはありません</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <hr>
+    <a href="{{ url_for('edit_todo_form', todo_id=todo.todo_id) }}">このTodoを編集する</a> |
+    <a href="/">一覧に戻る</a>
+</body>
+</html>

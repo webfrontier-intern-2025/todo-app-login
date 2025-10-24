@@ -1,0 +1,8 @@
+# 新しいTodoアイテムを作成する
+POST http://127.0.0.1:8000/api/todo
+Content-Type: application/json
+
+{
+    "content": "FlashpostからTodoを作成",
+    "due_date": "2025-10-21"
+}
