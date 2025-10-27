@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>タグ管理 (ToDo ID: {{ todo.id }})</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <h1>タグ管理</h1>
+    <h2>対象ToDo: {{ todo.content }} (ID: {{ todo.id }})</h2>
+
+    <h3>現在のタグ</h3>
+    <ul>
+        {% for tag in todo.tags %}
+            <li>
+                {{ tag.description }} (ID: {{ tag.id }})
+                {# ここに後でタグ削除用のフォームを追加します #}
+            </li>
+        {% else %}
+            <li>現在タグはありません</li>
+        {% endfor %}
+    </ul>
+    <hr>
+
+    <h3>既存のタグを追加</h3>
+    <form action="/todo/{{ todo.id }}/tags/add" method="post">
+        <label for="tag_id">追加するタグ:</label>
+        <select name="tag_id" id="tag_id" required>
+            <option value="">-- タグを選択 --</option>
+            {% for tag in all_tags %}
+                {# ToDoにまだ付いていないタグだけを表示する（任意） #}
+                {% set tag_already_added = false %}
+                {% for current_tag in todo.tags %}
+                    {% if current_tag.id == tag.id %}
+                        {% set tag_already_added = true %}
+                    {% endif %}
+                {% endfor %}
+                {% if not tag_already_added %}
+                    <option value="{{ tag.id }}">{{ tag.description }}</option>
+                {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit">タグを追加</button>
+    </form>
+    <p>（新しいタグを作成する機能は別途追加できます）</p>
+
+    <hr>
+    <a href="/todo/{{ todo.id }}">詳細に戻る</a> |
+    <a href="/">一覧に戻る</a>
+</body>
+</html>
