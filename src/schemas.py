@@ -17,17 +17,18 @@ class TodoCreate(TodoBase):
 class TagCreate(TagBase):
     pass
 
-# --- 最後に、読み取り・返却用のスキーマを定義します ---
+# src/schemas.py の Todo と Tag スキーマ
+# ...
 class Tag(TagBase):
-    tag_id: int
+    id: int # tag_id から変更
 
     class Config:
         from_attributes = True
 
 class Todo(TodoBase):
-    todo_id: int
+    id: int # todo_id から変更
     is_completed: bool
     tags: List[Tag] = []
 
     class Config:
-        from_attributes = True # 古いorm_modeから変更
+        from_attributes = True

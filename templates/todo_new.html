@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>ToDo新規作成</title>
-    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body>
     <h1>新しいTodoを追加</h1>
-    <form action="{{ url_for('create_todo_from_form') }}" method="post">
+    <form action="/todo/create" method="post">
         <div>
             <label for="content">内容:</label>
             <input type="text" id="content" name="content" required>
@@ -16,6 +16,7 @@
             <label for="due_date">期限:</label>
             <input type="text" id="due_date" name="due_date" placeholder="YYYY-MM-DD">
         </div>
+        
         <button type="submit">追加</button>
     </form>
     <hr>

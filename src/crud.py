@@ -1,10 +1,9 @@
-# crud.py
 from sqlalchemy.orm import Session
-import models, schemas
+from . import models, schemas # ピリオドを追加
 
 # IDを指定して単一のTodoアイテムを取得する
-def get_todo(db: Session, todo_id: int):
-    return db.query(models.Todo).filter(models.Todo.todo_id == todo_id).first()
+def get_todo(db: Session, id: int):
+    return db.query(models.Todo).filter(models.Todo.id == id).first()
 
 # Todoアイテムのリストを取得する
 def get_todos(db: Session, skip: int = 0, limit: int = 100):
@@ -19,8 +18,8 @@ def create_todo(db: Session, todo: schemas.TodoCreate):
     return db_todo
 
 # IDを指定して単一のTagを取得する
-def get_tag(db: Session, tag_id: int):
-    return db.query(models.Tag).filter(models.Tag.tag_id == tag_id).first()
+def get_tag(db: Session, id: int):
+    return db.query(models.Tag).filter(models.Tag.id == id).first()
 
 # description（内容）を指定してTagを取得する
 def get_tag_by_description(db: Session, description: str):
@@ -40,8 +39,8 @@ def create_tag(db: Session, tag: schemas.TagCreate):
 
 # TodoにTagを関連付ける
 def add_tag_to_todo(db: Session, todo_id: int, tag_id: int):
-    db_todo = get_todo(db, todo_id=todo_id)
-    db_tag = get_tag(db, tag_id=tag_id)
+    db_todo = get_todo(db, id=todo_id)
+    db_tag = get_tag(db, id=tag_id)
     # TodoとTagの両方が存在する場合のみ処理
     if db_todo and db_tag:
         db_todo.tags.append(db_tag)
@@ -51,7 +50,7 @@ def add_tag_to_todo(db: Session, todo_id: int, tag_id: int):
 
 # ToDoを更新する関数
 def update_todo(db: Session, todo_id: int, content: str, due_date: str, is_completed: bool):
-    db_todo = get_todo(db, todo_id=todo_id)
+    db_todo = get_todo(db, id=todo_id)
     if db_todo:
         db_todo.content = content
         db_todo.due_date = due_date

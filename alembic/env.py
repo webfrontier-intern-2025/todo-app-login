@@ -1,3 +1,9 @@
+import os
+import sys
+
+# 'src'フォルダをPythonのインポートパスに追加します
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+
 from models import Base
 from logging.config import fileConfig
 

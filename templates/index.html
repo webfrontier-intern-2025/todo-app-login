@@ -1,37 +1,37 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToDo App</title>
-    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToDo App</title>
+    <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <h1>ToDoリスト</h1>
-<div style="margin-bottom: 20px;">
-    <a href="{{ url_for('new_todo_form') }}">
-        <button>新しいTodoを追加する</button>
-    </a>
-</div>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>内容</th>
-                <th>期限</th>
-                <th>完了</th>
-            </tr>
-        </thead>
-        <tbody>
-                        {% for todo in todos %}
-            <tr>
-                <td>{{ todo.todo_id }}</td>
-                <td><a href="{{ url_for('read_todo_detail', todo_id=todo.todo_id) }}">{{ todo.content }}</a></td>
-                <td>{{ todo.due_date }}</td>
-                <td>{{ todo.is_completed }}</td>
-            </tr>
-            {% endfor %}
-                    </tbody>
-    </table>
+    <h1>ToDoリスト</h1>
+    <div style="margin-bottom: 20px;">
+        <a href="/todo/new">
+            <button>新しいTodoを追加する</button>
+        </a>
+    </div>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>内容</th>
+                <th>期限</th>
+                <th>完了</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for todo in todos %}
+            <tr>
+                <td>{{ todo.id }}</td>
+                <td><a href="/todo/{{ todo.id }}">{{ todo.content }}</a></td>
+                <td>{{ todo.due_date }}</td>
+                <td>{{ todo.is_completed }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

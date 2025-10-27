@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>ToDo編集</title>
-    <link href="{{ url_for('static', path='/css/style.css') }}" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
 </head>
 <body>
-    <h1>ToDo編集 (ID: {{ todo.todo_id }})</h1>
+    <h1>ToDo編集 (ID: {{ todo.id }})</h1>
 
-    <form action="{{ url_for('update_todo_from_form', todo_id=todo.todo_id) }}" method="post">
+    <form action="/todo/{{ todo.id }}/update" method="post">
         <div>
             <label for="content">内容:</label>
             <input type="text" id="content" name="content" value="{{ todo.content }}" required>
@@ -24,7 +24,7 @@
         <button type="submit">更新</button>
     </form>
     <hr>
-    <a href="{{ url_for('read_todo_detail', todo_id=todo.todo_id) }}">詳細に戻る</a> |
+    <a href="/todo/{{ todo.id }}">詳細に戻る</a> |
     <a href="/">一覧に戻る</a>
 </body>
 </html>
