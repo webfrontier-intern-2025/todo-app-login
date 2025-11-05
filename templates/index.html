@@ -5,14 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ToDo App</title>
     <link href="/static/css/style.css" rel="stylesheet">
+    <style>
+        .delete-btn {
+            background-color: #dc3545; color: white; border: none;
+            padding: 5px 10px; border-radius: 3px; cursor: pointer;
+        }
+        .delete-btn:hover { background-color: #c82333; }
+        #error-message { color: red; margin-top: 10px; }
+        
+        #create-form {
+            margin-bottom: 20px; padding: 15px; background-color: #f9f9f9;
+            border-radius: 5px; border: 1px solid #ddd;
+        }
+        #create-form input[type="text"], #create-form input[type="date"] {
+            margin-right: 10px; padding: 8px;
+        }
+        
+        /* --- 修正点: スタイル追加 --- */
+        /* 完了した行のスタイル */
+        tr.completed td {
+            text-decoration: line-through;
+            color: #888;
+        }
+        /* クリック可能なセル */
+        .status-cell {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .status-cell:hover {
+            background-color: #f0f0f0;
+        }
+
+    </style>
 </head>
 <body>
     <h1>ToDoリスト</h1>
-    <div style="margin-bottom: 20px;">
-        <a href="/todo/new">
-            <button>新しいTodoを追加する</button>
-        </a>
-    </div>
+    
+    <div id="error-message"></div>
+
+    <h2>新しいTodoを追加する</h2>
+    <form id="create-form">
+        <label for="content">内容:</label>
+        <input type="text" id="content" name="content" required>
+        
+        <label for="due_date">期限:</label>
+        <input type="text" id="due_date" name="due_date" placeholder="YYYY-MM-DD (任意)">
+        
+        <button type="submit">追加</button>
+    </form>
+
+
     <table border="1">
         <thead>
             <tr>
@@ -20,18 +62,200 @@
                 <th>内容</th>
                 <th>期限</th>
                 <th>完了</th>
+                <th>操作</th>
             </tr>
         </thead>
-        <tbody>
-            {% for todo in todos %}
-            <tr>
-                <td>{{ todo.id }}</td>
-                <td><a href="/todo/{{ todo.id }}">{{ todo.content }}</a></td>
-                <td>{{ todo.due_date }}</td>
-                <td>{{ todo.is_completed }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+        
+        <tbody id="todo-list-body">
+            </tbody>
     </table>
+
+    <script>
+        // === エラー表示用ヘルパー ===
+        function clearError() {
+            document.getElementById('error-message').textContent = '';
+        }
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // --- 
+        // 修正点1: ページ読み込み時にToDo一覧をAPIから取得
+        // ---
+        window.addEventListener('DOMContentLoaded', loadTodos);
+
+        /**
+         * (新設) ページ読み込み時にGET /api/todoを呼び出し、
+         * テーブル全体を描画する
+         */
+        async function loadTodos() {
+            clearError();
+            try {
+                const response = await fetch('/api/todo');
+                if (!response.ok) {
+                    throw new Error('一覧の読み込みに失敗しました');
+                }
+                const todos = await response.json();
+                
+                // 取得したデータですべての行を追加
+                todos.forEach(todo => {
+                    addTodoToTable(todo, false); // false = 末尾に追加
+                });
+
+            } catch (error) {
+                console.error('一覧読み込みエラー:', error);
+                showError(error.message);
+            }
+        }
+
+
+        // --- 
+        // ステップ2: 新規作成 (Create)
+        // (この部分は変更なし)
+        // ---
+        const createForm = document.getElementById('create-form');
+        
+        createForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            clearError();
+
+            const content = event.target.elements.content.value;
+            const dueDate = event.target.elements.due_date.value || null; 
+
+            try {
+                const response = await fetch('/api/todo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        due_date: dueDate
+                    })
+                });
+
+                if (response.ok) {
+                    const newTodo = await response.json();
+                    addTodoToTable(newTodo, true); // true = 先頭に追加
+                    event.target.reset();
+                } else {
+                    const errorData = await response.json();
+                    showError(`作成失敗: ${errorData.detail || 'サーバーエラー'}`);
+                }
+            } catch (error) {
+                console.error('作成リクエスト中にエラー:', error);
+                showError('エラー: サーバーに接続できませんでした。');
+            }
+        });
+        
+        /**
+         * (修正) ヘルパー関数: Todoオブジェクトをテーブル行に追加
+         * @param {object} todo - Todoオブジェクト (JSON)
+         * @param {boolean} prepend - trueなら先頭、falseなら末尾に追加
+         */
+        function addTodoToTable(todo, prepend = false) {
+            const tableBody = document.getElementById('todo-list-body');
+            const newRow = document.createElement('tr');
+            
+            // 修正点: 削除と更新(トグル)のためにIDとクラスを設定
+            newRow.id = `todo-row-${todo.id}`;
+            newRow.className = todo.is_completed ? 'completed' : '';
+
+            const displayDueDate = todo.due_date ? todo.due_date : '';
+
+            newRow.innerHTML = `
+                <td>${todo.id}</td>
+                <td><a href="/todo/${todo.id}">${todo.content}</a></td>
+                <td>${displayDueDate}</td>
+                
+                <td id="todo-status-${todo.id}" 
+                    class="status-cell" 
+                    onclick="toggleStatus(${todo.id})">
+                    ${todo.is_completed}
+                </td>
+                
+                <td>
+                    <button class="delete-btn" onclick="deleteTodo(${todo.id})">削除</button>
+                </td>
+            `;
+            
+            if (prepend) {
+                tableBody.prepend(newRow); // 先頭に追加
+            } else {
+                tableBody.appendChild(newRow); // 末尾に追加
+            }
+        }
+
+
+        // --- 
+        // ステップ3: 更新 (Update)
+        // 修正点3: 完了ステータスをトグルする関数を新設
+        // ---
+        
+        /**
+         * (新設) 完了ステータスをトグル（反転）する
+         */
+        async function toggleStatus(id) {
+            clearError();
+            try {
+                // 1. 新しいAPI (PUT /api/todo/{id}/toggle) を呼び出す
+                const response = await fetch(`/api/todo/${id}/toggle`, {
+                    method: 'PUT'
+                });
+
+                if (response.ok) {
+                    // 2. 成功したら、APIが返した更新後のTodo (JSON) を受け取る
+                    const updatedTodo = await response.json();
+                    
+                    // 3. 画面（DOM）を直接更新する
+                    const statusCell = document.getElementById(`todo-status-${id}`);
+                    const todoRow = document.getElementById(`todo-row-${id}`);
+                    
+                    if (statusCell && todoRow) {
+                        // 3a. セルのテキストを更新 (True / False)
+                        statusCell.textContent = updatedTodo.is_completed;
+                        // 3b. 行のクラスを更新 (取り消し線)
+                        todoRow.className = updatedTodo.is_completed ? 'completed' : '';
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showError(`更新失敗: ${errorData.detail || 'サーバーエラー'}`);
+                }
+            } catch (error) {
+                console.error('更新リクエスト中にエラー:', error);
+                showError('エラー: サーバーに接続できませんでした。');
+            }
+        }
+        
+
+        // --- 
+        // ステップ4: 削除 (Delete)
+        // (この部分は変更なし)
+        // ---
+        async function deleteTodo(id) {
+            clearError();
+            if (!confirm(`ID ${id} のTodoを本当に削除しますか？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/todo/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    const rowToRemove = document.getElementById(`todo-row-${id}`);
+                    if (rowToRemove) {
+                        rowToRemove.remove();
+                    }
+                } else {
+                    const errorData = await response.json();
+                    showError(`削除失敗: ${errorData.detail || 'サーバーエラー'}`);
+                }
+            } catch (error) {
+                console.error('削除リクエスト中にエラー:', error);
+                showError('エラー: サーバーに接続できませんでした。');
+            }
+        }
+    </script>
+
 </body>
 </html>
