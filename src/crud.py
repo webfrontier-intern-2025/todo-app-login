@@ -2,7 +2,32 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from . import models, schemas # 相対インポートを使用
 
-# === Todo CRUD 関数 ===
+
+# ここから
+from .security import password_hash
+
+# ユーザー名でユーザーを検索する（ログイン時と登録時の重複チェックで使う）
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
+
+# ユーザーを作成する
+def create_user(db: Session, user: schemas.UserCreate):
+
+    hashed_password = hash_password(user.password) #ハッシュ化処理
+
+    db_user = models.User(
+        username=user.username,
+        hashed_password=hashed_password
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+# ここまで追記1106
+
+
+# === Todo CRUD 関数 ===(元5行目)
 
 def get_todo(db: Session, id: int):
     """IDを指定して単一のTodo項目を取得します。"""
