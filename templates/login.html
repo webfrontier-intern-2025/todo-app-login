@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Todoアプリ：ログイン</title>
+    <link rel="stylesheet" href="/static/login.css">
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="top-bar">
+            <a href="/logout" class="logout">↩️ログアウト</a>
+            <button class="user-icon-btn" onclick="alert('ユーザープロフィールへ行く（ダミー）');">👤</button>
+        </div>
+
+        <div class="login-box">
+            <h1>📝ToDoログイン</h1>
+
+            <form action="/login" method="post">
+                <input type="text" name="username" placeholder="ユーザーネーム" required>
+                <input type="password" name="password" placeholder="パスワード" required>
+                <button type="submit">ログイン</button>
+            </form>
+
+            <div class="links">
+                <a href="/forgot-password" class="forgot">パスワードを忘れた場合</a>
+                <a href="/signup" class="signup">新しいアカウントを作成</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -46,7 +46,7 @@ def read_root(request: Request, db: Session = Depends(get_db)):
     """
     # todos = crud.get_todos(db) <-- データをここで取得しない
     # "todos": todos を渡さない
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("login.html", {"request": request})
 
 @app.get("/todo/new", response_class=HTMLResponse)
 def new_todo_form(request: Request):
