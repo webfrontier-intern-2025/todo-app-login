@@ -11,60 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from . import crud, models, schemas
 from .models import SessionLocal, engine
 
-
-# ここから
-from fastapi import status
-from fastapi.security import OAuth2PasswordRequestForm
-from . import security
-
-# ---------------------------------------------
-# 1. 新規登録API (/register)
-# ---------------------------------------------
-@app.post("/register", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    
-    # 1. ユーザーが既に存在するか確認 (これは今すぐ書ける)
-    db_user = crud.get_user_by_username(db, username=user.username)
-    if db_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered"
-        )
-    
-    # 2. ユーザーをDBに作成 (crud.py経由)
-    return crud.create_user(db=db, user=user)
-
-
-# ---------------------------------------------
-# 2. ログインAPI (/login)
-# ---------------------------------------------
-@app.post("/login", response_model=schemas.Token)
-def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    # 1. ユーザーをDBから検索 (これは今すぐ書ける)
-    user = crud.get_user_by_username(db, username=form_data.username)
-
-    # 2. ユーザー存在チェックとパスワード照合
-    if not user: or not security.verify_password(form_data.password, user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
-    # 3. 認証成功：アクセストークンを作成
-    access_token = security.create_access_token(
-        data={"sub": user.username}
-    )
-    
-    return {"access_token": access_token, "token_type": "bearer"}
-
-# ここまで追記
-
-
-# データベースのテーブルが存在しない場合は作成する(元14行目)
+# データベースのテーブルが存在しない場合は作成する
 # 注意: 本番環境ではAlembicがマイグレーションを管理すべき
 models.Base.metadata.create_all(bind=engine)
 
@@ -99,7 +46,7 @@ def read_root(request: Request, db: Session = Depends(get_db)):
     """
     # todos = crud.get_todos(db) <-- データをここで取得しない
     # "todos": todos を渡さない
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/todo/new", response_class=HTMLResponse)
 def new_todo_form(request: Request):
