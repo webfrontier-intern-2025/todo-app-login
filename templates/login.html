@@ -182,6 +182,16 @@
             transform: scale(1.05);
             box-shadow: 0 6px 15px rgba(0, 150, 255, 0.45);
         }
+
+        /* ===== エラーメッセージ ===== */
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: rgba(255, 200, 200, 0.5);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
@@ -195,6 +205,9 @@
             <h1>📝ToDoログイン</h1>
 
             <form action="/login" method="post">
+                {% if error %}
+                    <div class="error-message">{{ error }}</div>
+                {% endif %}
                 <input type="text" name="username" placeholder="ユーザーネーム" required>
                 <input type="password" name="password" placeholder="パスワード" required>
                 <button type="submit">ログイン</button>
