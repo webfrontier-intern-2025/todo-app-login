@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from typing import Optional
 from . import models, schemas # 相対インポートを使用
+from .security import get_password_hash
 
 # === Todo CRUD 関数 ===
 
@@ -91,3 +92,33 @@ def add_tag_to_todo(db: Session, todo_id: int, tag_id: int):
             db.commit()
             db.refresh(db_todo)
     return db_todo
+
+def get_user(db: Session, user_id: int):
+    """
+    IDでユーザーを1件取得
+    """
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def get_user_by_username(db: Session, username: str):
+    """
+    ユーザー名でユーザーを1件取得 (ログイン認証時に使用)
+    """
+    return db.query(models.User).filter(models.User.username == username).first()
+
+def create_user(db: Session, user: schemas.UserCreate):
+    """
+    新しいユーザーを作成
+    """
+    # パスワードをハッシュ化
+    hashed_password = get_password_hash(user.password)
+    
+    # データベースモデルを作成
+    db_user = models.User(
+        username=user.username, 
+        hashed_password=hashed_password
+    )
+    
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
