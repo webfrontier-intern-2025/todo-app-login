@@ -2,8 +2,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Todoアプリ：ログイン</title>
+    <title>Todoアプリ：新規登録</title>
     <style>
+        /* ===== ほぼ login.html と同じスタイルを使用 ===== */
+        
         /* ===== 背景全体 ===== */
         body {
             margin: 0;
@@ -20,7 +22,7 @@
         .login-wrapper {
             width: 70vw;
             max-width: 800px;
-            min-height: 500px; 
+            aspect-ratio: 3 / 4;
             background: rgba(255, 255, 255, 0.4);
             backdrop-filter: blur(15px);
             border-radius: 24px;
@@ -87,15 +89,6 @@
             transform: scale(1.05);
             box-shadow: 0 8px 18px rgba(0, 123, 255, 0.45);
         }
-        
-        /* --- ↓↓↓ エラーメッセージ用のスタイルを追加 (register.htmlから借用) ↓↓↓ --- */
-        #error-message {
-            color: #d90000; /* 赤色 */
-            font-weight: 500;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            height: 1.2rem; /* エラーがなくても高さを確保 */
-        }
 
         .links {
             margin-top: 3.5rem;
@@ -109,11 +102,10 @@
             transition: all 0.2s ease;
         }
 
-        .forgot {
-            color: #555;
-            font-size: 0.9rem;
-        }
-
+        /*
+         * login.html の .signup スタイルを、
+         * 「ログインはこちら」リンクにも流用します 
+        */
         .signup {
             color: white;
             background: linear-gradient(135deg, #00bcd4, #0099ff);
@@ -129,65 +121,69 @@
             transform: scale(1.05);
             box-shadow: 0 6px 15px rgba(0, 150, 255, 0.45);
         }
+        
+        /* ===== エラーメッセージ用 (JavaScriptが使用) ===== */
+        #error-message {
+            color: #d90000; /* 赤色 */
+            font-weight: 500;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            height: 1.2rem; /* エラーがなくても高さを確保 */
+        }
+
     </style>
 </head>
 <body>
     <div class="login-wrapper">
-
+        
         <div class="login-box">
-            <h1>📝ToDoログイン</h1>
+            <h1>📝新規アカウント作成</h1>
 
-            <form id="login-form">
+            <form id="register-form">
+                
                 <input type="text" name="username" placeholder="ユーザーネーム" required>
                 <input type="password" name="password" placeholder="パスワード" required>
-                <button type="submit">ログイン</button>
+                
+                <button type="submit">登録</button>
                 
                 <div id="error-message"></div>
             </form>
 
             <div class="links">
-                <a href="/forgot-password" class="forgot">パスワードを忘れた場合</a>
-                
-                <a href="/register" class="signup">新しいアカウントを作成</a>
+                <a href="/login" class="signup">すでにアカウントをお持ちですか？ ログイン</a>
             </div>
         </div>
     </div>
-
+    
     <script>
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const errorMessage = document.getElementById('error-message');
             errorMessage.textContent = ''; // 既存のエラーをクリア
 
-            // /api/token は JSON ではなくフォーム形式のデータを期待します。
-            // そのため、URLSearchParams を使います。
-            const formData = new URLSearchParams();
-            formData.append('username', e.target.username.value);
-            formData.append('password', e.target.password.value);
+            // name属性から値を取得
+            const username = e.target.username.value;
+            const password = e.target.password.value;
 
             try {
-                // 修正: /login ではなく /api/token に POST
-                const response = await fetch('/api/token', {
+                const response = await fetch('/api/users/register', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
                 });
 
-                if (response.ok) { // 200 OK
-                    const data = await response.json();
-                    
-                    // 取得したトークンをブラウザの localStorage に保存
-                    localStorage.setItem('todo_access_token', data.access_token);
-                    
-                    // メインページ (/) にリダイレクト
-                    window.location.href = '/';
+                if (response.status === 201) {
+                    // 登録成功
+                    alert('登録が完了しました。ログインページに移動します。');
+                    window.location.href = '/login';
                 } else {
-                    // 401 Unauthorized (ユーザー名かパスワードが違う)
+                    // 登録失敗 (ユーザー名重複など)
                     const error = await response.json();
-                    errorMessage.textContent = `ログイン失敗: ${error.detail}`;
+                    errorMessage.textContent = `登録失敗: ${error.detail}`;
                 }
             } catch (error) {
                 // ネットワークエラーなど
-                errorMessage.textContent = 'ログインリクエスト中にエラーが発生しました。';
+                errorMessage.textContent = '登録リクエスト中にエラーが発生しました。';
             }
         });
     </script>

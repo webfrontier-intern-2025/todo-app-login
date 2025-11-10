@@ -2,7 +2,30 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
-# --- まず、基本となるスキーマを定義します ---
+
+#　ここから
+# ユーザー登録（新規登録）時にAPIが受け取るJSONの型
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+# ユーザー情報をAPIが返す時の型（パスワードは含めない）
+class User(BaseModel):
+    id: int
+    username: str
+
+    class Config:
+        orm_mode = True # SQLAlchemyモデルをPydanticモデルに自動変換する設定
+
+# ログイン成功時に返すトークンの型
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# ここまで追記11061450
+
+
+# --- まず、基本となるスキーマを定義します ---(元5行目)
 class TodoBase(BaseModel):
     content: str
     due_date: Optional[str] = None
