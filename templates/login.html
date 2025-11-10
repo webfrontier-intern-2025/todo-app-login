@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Todoアプリ：ログイン</title>
+    <style>
+        /* ===== 背景全体 ===== */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background: linear-gradient(135deg, #d7e3ff, #b9f1ff, #a0e4f1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: "Poppins", "Hiragino Sans", sans-serif;
+        }
+
+        /* ===== 枠全体 ===== */
+        .login-wrapper {
+            width: 70vw;
+            max-width: 800px;
+            /* 修正: ログアウトボタンを消したため、高さを少し調整 */
+            min-height: 500px; 
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* ===== 中央コンテンツ ===== */
+        .login-box {
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #0057b8;
+            font-size: 2.2rem;
+            margin-bottom: 2.5rem;
+            text-shadow: 0 2px 4px rgba(255, 255, 255, 0.8);
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.6rem;
+        }
+
+        input {
+            padding: 14px;
+            border: none;
+            border-radius: 25px;
+            background-color: #fff;
+            color: #333;
+            font-size: 1rem;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus {
+            transform: scale(1.03);
+            box-shadow: 0 4px 10px rgba(0, 150, 255, 0.3);
+            outline: none;
+        }
+
+        button[type="submit"] {
+            background: linear-gradient(135deg, #66b3ff, #00bcd4);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 28px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        button[type="submit"]:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 18px rgba(0, 123, 255, 0.45);
+        }
+        
+        /* --- ↓↓↓ 修正: エラーメッセージ用のスタイルを追加 (register.htmlから借用) ↓↓↓ --- */
+        #error-message {
+            color: #d90000; /* 赤色 */
+            font-weight: 500;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            height: 1.2rem; /* エラーがなくても高さを確保 */
+        }
+        /* --- ↑↑↑ 修正ここまで ↑↑↑ --- */
+
+        .links {
+            margin-top: 3.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .links a {
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .forgot {
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        .signup {
+            color: white;
+            background: linear-gradient(135deg, #00bcd4, #0099ff);
+            border-radius: 25px;
+            padding: 12px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(0, 150, 255, 0.3);
+        }
+
+        .signup:hover {
+            background: linear-gradient(135deg, #0099ff, #66ccff);
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 150, 255, 0.45);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-wrapper">
+        <div class="login-box">
+            <h1>📝ToDoログイン</h1>
+
+            <form id="login-form">
+                <input type="text" name="username" placeholder="ユーザーネーム" required>
+                <input type="password" name="password" placeholder="パスワード" required>
+                <button type="submit">ログイン</button>
+                
+                <div id="error-message"></div>
+            </form>
+
+            <div class="links">
+                <a href="/forgot-password" class="forgot">パスワードを忘れた場合</a>
+                
+                <a href="/register" class="signup">新しいアカウントを作成</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.textContent = ''; // 既存のエラーをクリア
+
+            // /api/token (OAuth2PasswordRequestForm) は JSON ではなく
+            // "application/x-www-form-urlencoded" 形式のデータを期待します。
+            // そのため、URLSearchParams を使います。
+            const formData = new URLSearchParams();
+            formData.append('username', e.target.username.value);
+            formData.append('password', e.target.password.value);
+
+            try {
+                // 修正: /login ではなく /api/token に POST
+                const response = await fetch('/api/token', {
+                    method: 'POST',
+                    body: formData
+                    // (注: headers 'Content-Type' は URLSearchParams の場合、自動で設定されます)
+                });
+
+                if (response.ok) { // 200 OK
+                    const data = await response.json();
+                    
+                    // 取得したトークンをブラウザの localStorage に保存
+                    localStorage.setItem('todo_access_token', data.access_token);
+                    
+                    // メインページ (/) にリダイレクト
+                    window.location.href = '/';
+                } else {
+                    // 401 Unauthorized (ユーザー名かパスワードが違う)
+                    const error = await response.json();
+                    errorMessage.textContent = `ログイン失敗: ${error.detail}`;
+                }
+            } catch (error) {
+                // ネットワークエラーなど
+                errorMessage.textContent = 'ログインリクエスト中にエラーが発生しました。';
+            }
+        });
+    </script>
+    </body>
+</html>
