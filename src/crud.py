@@ -4,28 +4,7 @@ from . import models, schemas # 相対インポートを使用
 from .security import get_password_hash
 
 
-# ここから
-from .security import password_hash
 
-# ユーザー名でユーザーを検索する（ログイン時と登録時の重複チェックで使う）
-def get_user_by_username(db: Session, username: str):
-    return db.query(models.User).filter(models.User.username == username).first()
-
-# ユーザーを作成する
-def create_user(db: Session, user: schemas.UserCreate):
-
-    hashed_password = hash_password(user.password) #ハッシュ化処理
-
-    db_user = models.User(
-        username=user.username,
-        hashed_password=hashed_password
-    )
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
-
-# ここまで追記1106
 
 
 # === Todo CRUD 関数 ===(元5行目)
