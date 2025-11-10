@@ -21,7 +21,6 @@
             margin-right: 10px; padding: 8px;
         }
         
-        /* --- 修正点: スタイル追加 --- */
         /* 完了した行のスタイル */
         tr.completed td {
             text-decoration: line-through;
@@ -35,10 +34,26 @@
         .status-cell:hover {
             background-color: #f0f0f0;
         }
-
+        
+        /* ログアウトボタン用のスタイル */
+        #logout-button {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            float: right;
+            margin-top: -40px;
+        }
+        #logout-button:hover {
+            background-color: #5a6268;
+        }
     </style>
 </head>
 <body>
+    
+    <button id="logout-button">ログアウト</button>
     <h1>ToDoリスト</h1>
     
     <div id="error-message"></div>
@@ -71,7 +86,44 @@
     </table>
 
     <script>
-        // === エラー表示用ヘルパー ===
+        // === トークン管理と認証チェック ===
+        const token = localStorage.getItem('todo_access_token');
+        
+        // トークンがない場合、ログインページにリダイレクト
+        if (!token) {
+            window.location.href = '/login';
+        }
+
+        // 認証ヘッダーを組み立てる
+        const authHeaders = {
+            'Authorization': `Bearer ${token}`
+        };
+
+        /**
+         * (新設) fetchリクエスト用のカスタム関数 (ヘッダーを自動追加)
+         */
+        async function fetchWithAuth(url, options = {}) {
+            // ヘッダーをマージ (既存のヘッダーも保持)
+            options.headers = {
+                ...options.headers,
+                ...authHeaders
+            };
+            
+            const response = await fetch(url, options);
+
+            // 認証エラー (トークン切れなど) の場合、ログインページに戻す
+            if (response.status === 401) {
+                localStorage.removeItem('todo_access_token'); // 古いトークンを削除
+                alert('セッションが切れました。再度ログインしてください。');
+                window.location.href = '/login';
+                // 401エラーの場合は、以降の処理を中断するためにエラーをスローする
+                throw new Error('Authentication failed (401)');
+            }
+            
+            return response;
+        }
+
+        // === エラー表示用ヘルパー (変更なし) ===
         function clearError() {
             document.getElementById('error-message').textContent = '';
         }
@@ -80,22 +132,23 @@
         }
 
         // --- 
-        // 修正点1: ページ読み込み時にToDo一覧をAPIから取得
+        // 1: ページ読み込み (Read)
         // ---
         window.addEventListener('DOMContentLoaded', loadTodos);
 
-        /**
-         * (新設) ページ読み込み時にGET /api/todoを呼び出し、
-         * テーブル全体を描画する
-         */
         async function loadTodos() {
             clearError();
             try {
-                const response = await fetch('/api/todo');
+                // "fetch" を "fetchWithAuth" に変更
+                const response = await fetchWithAuth('/api/todo'); 
+                
                 if (!response.ok) {
                     throw new Error('一覧の読み込みに失敗しました');
                 }
                 const todos = await response.json();
+                
+                // 既存の行をクリア (二重描画を防ぐため)
+                document.getElementById('todo-list-body').innerHTML = '';
                 
                 // 取得したデータですべての行を追加
                 todos.forEach(todo => {
@@ -103,15 +156,18 @@
                 });
 
             } catch (error) {
-                console.error('一覧読み込みエラー:', error);
-                showError(error.message);
+                // 401エラーの場合は、すでにアラートとリダイレクト処理が
+                // fetchWithAuth内で実行されているので、ここでは追加のエラー表示は不要
+                if (error.message !== 'Authentication failed (401)') {
+                    console.error('一覧読み込みエラー:', error);
+                    showError(error.message);
+                }
             }
         }
 
 
         // --- 
-        // ステップ2: 新規作成 (Create)
-        // (この部分は変更なし)
+        // 2: 新規作成 (Create)
         // ---
         const createForm = document.getElementById('create-form');
         
@@ -123,7 +179,8 @@
             const dueDate = event.target.elements.due_date.value || null; 
 
             try {
-                const response = await fetch('/api/todo', {
+                // "fetch" を "fetchWithAuth" に変更
+                const response = await fetchWithAuth('/api/todo', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -142,20 +199,19 @@
                 }
             } catch (error) {
                 console.error('作成リクエスト中にエラー:', error);
-                showError('エラー: サーバーに接続できませんでした。');
+                if (error.message !== 'Authentication failed (401)') {
+                    showError('エラー: サーバーに接続できませんでした。');
+                }
             }
         });
         
         /**
-         * (修正) ヘルパー関数: Todoオブジェクトをテーブル行に追加
-         * @param {object} todo - Todoオブジェクト (JSON)
-         * @param {boolean} prepend - trueなら先頭、falseなら末尾に追加
+         * (ヘルパー関数) Todoオブジェクトをテーブル行に追加
          */
         function addTodoToTable(todo, prepend = false) {
             const tableBody = document.getElementById('todo-list-body');
             const newRow = document.createElement('tr');
             
-            // 修正点: 削除と更新(トグル)のためにIDとクラスを設定
             newRow.id = `todo-row-${todo.id}`;
             newRow.className = todo.is_completed ? 'completed' : '';
 
@@ -186,33 +242,24 @@
 
 
         // --- 
-        // ステップ3: 更新 (Update)
-        // 修正点3: 完了ステータスをトグルする関数を新設
+        // 3: 更新 (Update / Toggle)
         // ---
-        
-        /**
-         * (新設) 完了ステータスをトグル（反転）する
-         */
         async function toggleStatus(id) {
             clearError();
             try {
-                // 1. 新しいAPI (PUT /api/todo/{id}/toggle) を呼び出す
-                const response = await fetch(`/api/todo/${id}/toggle`, {
+                // "fetch" を "fetchWithAuth" に変更
+                const response = await fetchWithAuth(`/api/todo/${id}/toggle`, { 
                     method: 'PUT'
                 });
 
                 if (response.ok) {
-                    // 2. 成功したら、APIが返した更新後のTodo (JSON) を受け取る
                     const updatedTodo = await response.json();
                     
-                    // 3. 画面（DOM）を直接更新する
                     const statusCell = document.getElementById(`todo-status-${id}`);
                     const todoRow = document.getElementById(`todo-row-${id}`);
                     
                     if (statusCell && todoRow) {
-                        // 3a. セルのテキストを更新 (True / False)
                         statusCell.textContent = updatedTodo.is_completed;
-                        // 3b. 行のクラスを更新 (取り消し線)
                         todoRow.className = updatedTodo.is_completed ? 'completed' : '';
                     }
                 } else {
@@ -221,14 +268,15 @@
                 }
             } catch (error) {
                 console.error('更新リクエスト中にエラー:', error);
-                showError('エラー: サーバーに接続できませんでした。');
+                if (error.message !== 'Authentication failed (401)') {
+                    showError('エラー: サーバーに接続できませんでした。');
+                }
             }
         }
         
 
         // --- 
-        // ステップ4: 削除 (Delete)
-        // (この部分は変更なし)
+        // 4: 削除 (Delete)
         // ---
         async function deleteTodo(id) {
             clearError();
@@ -237,7 +285,8 @@
             }
 
             try {
-                const response = await fetch(`/api/todo/${id}`, {
+                // "fetch" を "fetchWithAuth" に変更
+                const response = await fetchWithAuth(`/api/todo/${id}`, { 
                     method: 'DELETE'
                 });
 
@@ -252,9 +301,21 @@
                 }
             } catch (error) {
                 console.error('削除リクエスト中にエラー:', error);
-                showError('エラー: サーバーに接続できませんでした。');
+                if (error.message !== 'Authentication failed (401)') {
+                    showError('エラー: サーバーに接続できませんでした。');
+                }
             }
         }
+        
+        // ---
+        // 5: ログアウト機能
+        // ---
+        document.getElementById('logout-button').addEventListener('click', () => {
+            if (confirm('ログアウトしますか？')) {
+                localStorage.removeItem('todo_access_token');
+                window.location.href = '/login';
+            }
+        });
     </script>
 
 </body>

@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker # sessionmakerを追加
 
 # データベースの接続設定
-SQLALCHEMY_DATABASE_URL = "sqlite:///./todo.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 # ↓↓↓ SessionLocalの定義を追加 ↓↓↓
@@ -29,19 +29,6 @@ todo_tag_association = Table(
     Column("tag_id", Integer, ForeignKey("Tag.id")),
 )
 
-
-class User(Base):
-    __tablename__ = "User"
-
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    created_at = Column(DateTime, server_default=func.now())
-
-    # ユーザーが作成したTodoへのリレーション
-    todos = relationship("Todo", back_populates="user")
-
-
 class Todo(Base):
     __tablename__ = "Todo"
     id = Column("id", Integer, primary_key=True, index=True)
@@ -50,13 +37,7 @@ class Todo(Base):
     is_completed = Column("完了/未完了", Boolean, default=False)
     created_at = Column("作成日時", DateTime, server_default=func.now())
     
-    # １対多のリレーション（User - Todo）
-    user_id = Column(Integer, ForeignKey("User.id"))
-    user = relationship("User", back_populates="todos")
-
-    # 多対多のリレーション（Todo - Tag）
     tags = relationship("Tag", secondary=todo_tag_association, back_populates="todos")
-
 
 class Tag(Base):
     __tablename__ = "Tag"
@@ -65,3 +46,13 @@ class Tag(Base):
 
     todos = relationship("Todo", secondary=todo_tag_association, back_populates="tags")
 
+class User(Base):
+    """
+    ユーザーモデル
+    """
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)
