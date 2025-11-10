@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship, declarative_base, sessionmaker # sessionmakerを追加
 
 # データベースの接続設定
-SQLALCHEMY_DATABASE_URL = "sqlite:///./todo.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 
 # ↓↓↓ SessionLocalの定義を追加 ↓↓↓
@@ -45,3 +45,14 @@ class Tag(Base):
     description = Column("説明", String, index=True)
 
     todos = relationship("Todo", secondary=todo_tag_association, back_populates="tags")
+
+class User(Base):
+    """
+    ユーザーモデル
+    """
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    is_active = Column(Boolean, default=True)

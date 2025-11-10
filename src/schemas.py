@@ -32,3 +32,25 @@ class Todo(TodoBase):
 
     class Config:
         from_attributes = True
+
+
+class UserBase(BaseModel):
+    username: str
+
+class UserCreate(UserBase):
+    password: str # APIで受け取る際は平文のパスワード
+
+class User(UserBase):
+    id: int
+    is_active: bool
+    # todos: List[Todo] = [] # 将来的にToDoと関連付ける場合
+
+    class Config:
+        orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
