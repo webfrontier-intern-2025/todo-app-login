@@ -129,13 +129,23 @@
             transform: scale(1.05);
             box-shadow: 0 6px 15px rgba(0, 150, 255, 0.45);
         }
+
+        /* ===== エラーメッセージ ===== */
+        .error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            background: rgba(255, 200, 200, 0.5);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="login-wrapper">
 
         <div class="login-box">
-            <h1>📝ToDoログイン</h1>
+            <h1>📝 ToDoログイン</h1>
 
             <form id="login-form">
                 <input type="text" name="username" placeholder="ユーザーネーム" required>
