@@ -9,13 +9,15 @@ def get_todo(db: Session, id: int):
     """IDを指定して単一のTodo項目を取得します。"""
     return db.query(models.Todo).filter(models.Todo.id == id).first()
 
-def get_todos(db: Session, skip: int = 0, limit: int = 100):
-    """Todo項目のリストを取得します。"""
-    return db.query(models.Todo).offset(skip).limit(limit).all()
+#11/11/1057変更
+def get_todos(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    """ユーザーIDに紐づくTodoだけを取得"""
+    return db.query(models.Todo).filter(models.Todo.user_id == user_id).offset(skip).limit(limit).all()
 
-def create_todo(db: Session, todo: schemas.TodoCreate):
+#11/11/1057変更
+def create_todo(db: Session, todo: schemas.TodoCreate, user_id: int):
     """新しいTodo項目を作成します。"""
-    db_todo = models.Todo(content=todo.content, due_date=todo.due_date)
+    db_todo = models.Todo(content=todo.content, due_date=todo.due_date, user_id=user_id)
     db.add(db_todo)
     db.commit()
     db.refresh(db_todo)

@@ -212,20 +212,24 @@ async def read_users_me(current_user: models.User = Depends(get_current_user)):
 
 # --- ToDo API (ログイン必須) ---
 
+#11/11/1057変更
 @app.post("/api/todo", response_model=schemas.Todo, status_code=status.HTTP_201_CREATED)
 def create_todo_endpoint(
     todo: schemas.TodoCreate, 
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user) # <--- 保護
+    current_user: models.User = Depends(get_current_user)
 ):
-    return crud.create_todo(db=db, todo=todo) 
+    # current_user.id を渡す
+    return crud.create_todo(db=db, todo=todo, user_id=current_user.id)
 
+#11/11/1057変更
 @app.get("/api/todo", response_model=List[schemas.Todo])
 def read_todos_endpoint(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user) # <--- 保護
+    current_user: models.User = Depends(get_current_user)
 ):
-    todos = crud.get_todos(db) 
+    # current_user.id を渡して絞り込む
+    todos = crud.get_todos(db, user_id=current_user.id) 
     return todos
 
 @app.get("/api/todo/{id}", response_model=schemas.Todo)

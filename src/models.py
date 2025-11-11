@@ -39,6 +39,10 @@ class Todo(Base):
     
     tags = relationship("Tag", secondary=todo_tag_association, back_populates="todos")
 
+# 11/11/1057追加
+    user_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("User", back_populates="todos")
+
 class Tag(Base):
     __tablename__ = "Tag"
     id = Column("id", Integer, primary_key=True, index=True)
@@ -56,3 +60,6 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
+
+# 11/11/1057追加
+    todos = relationship("Todo", back_populates="user")
